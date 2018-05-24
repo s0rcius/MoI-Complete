@@ -1,0 +1,8 @@
+<sounds root="sfx/">
+	<sound name="leme_sing">
+		<sample weight="1" path="leme_sing.wav"/>
+	</sound>
+  <sound name="mello_sing">
+		<sample weight="1" path="mello_sing.wav"/>
+	</sound>
+</sounds>

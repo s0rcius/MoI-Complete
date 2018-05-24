@@ -1,0 +1,39 @@
+<ItemPools>
+	<Pool Name="treasure">
+		<Item Name="Lil Leme!" Weight="1" DecreaseBy="0.5" RemoveOn="0.1" />
+		<Item Name="Lil Mello" Weight="1" DecreaseBy="0.5" RemoveOn="0.1" />
+	</Pool>
+	<Pool Name="shop"/>
+	<Pool Name="boss"/>
+	<Pool Name="devil">
+	</Pool>
+	<Pool Name="angel"/>
+	<Pool Name="secret">
+	</Pool>
+	<Pool Name="library"/>
+	<Pool Name="challenge"/>
+	<Pool Name="goldenChest"/>
+	<Pool Name="redChest"/>
+	<Pool Name="beggar"/>
+	<Pool Name="demonBeggar"/>
+	<Pool Name="curse">
+	</Pool>
+	<Pool Name="keyMaster"/>
+	<Pool Name="bossrush"/>
+	<Pool Name="dungeon"/>
+	<Pool Name="greedTreasure">
+	</Pool>
+	<Pool Name="greedBoss"/>
+	<Pool Name="greedShop"/>
+	<Pool Name="greedCurse">
+	</Pool>
+	<Pool Name="greedDevil">
+	</Pool>
+	<Pool Name="greedAngel"/>
+	<Pool Name="greedLibrary"/>
+	<Pool Name="greedSecret">
+	</Pool>
+	<Pool Name="greedGoldenChest"/>
+	<Pool Name="bombBum">
+	</Pool>
+</ItemPools>

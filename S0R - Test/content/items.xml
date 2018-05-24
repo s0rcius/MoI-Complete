@@ -1,0 +1,5 @@
+<items gfxroot="gfx/items/" version="1">
+	<!--Familiars-->
+	<familiar name="Lil Leme!" description="Cute little one" gfx="lil_leme.png" />
+	<familiar name="Lil Mello" description="Singing and dancing is her specialty" gfx="lil_mello.png" />	
+</items>
