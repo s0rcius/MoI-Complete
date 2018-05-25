@@ -1,7 +1,9 @@
 <metadata>
 	<name>VvP</name>
 	<directory>vvp</directory>
-	<description>Test mod</description>
+	<description>
+		Test mod - This mod contains two familiars (Lil Leme, Lil Mello), both orbits around Issac and shoot tears in Isaac's fire direction. When Isaac gets hit, the familiar instead of orbiting around Isaac. Jumps around the room and shoots tears in the enemy's direction
+	</description>
 	<version>1.0</version>
 	<visibility/>
 	<tag id="Familiars"/>

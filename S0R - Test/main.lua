@@ -371,15 +371,17 @@ local function update_mello(_, leme)
 			local FireDir = leme.Player:GetFireDirection()
 			tear = leme:FireProjectile(Dir[FireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
+
 			local tearsprite = tear:GetSprite()
 			local randomtear = math.random(3)
+
 			if randomtear == 1 then	tearsprite:Play("RegularTear1", false)
 			elseif randomtear == 2 then	tearsprite:Play("RegularTear2", false)
 			else tearsprite:Play("RegularTear3", false) end
 			
 			tear:SetSize(1, Vector(1,1),8)
 			tear.CollisionDamage = Leme.TEAR_DMG
-			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS-- Wiggle Worm
+			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS -- Wiggle Worm
 
 			--Mod.PlaySound()
 			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
