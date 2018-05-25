@@ -6,8 +6,8 @@ StartDebug();
 local Mod = RegisterMod("VvP", 1)
 local game = Game()
 local sfx = SFXManager()
-local ZERO_VECTOR = Vector(0, 0)
-local MIN_FIRE_DELAY = 5
+local ZERO_VECTOR = Vector(0, 0) -- TODO: ?
+local MIN_FIRE_DELAY = 5 -- TODO: ?
 
 --
 -- Define Ids to easy-to-use names
@@ -25,20 +25,23 @@ local Dir = {
 	[Direction.RIGHT] = Vector(1,0)
 }
 
+--
 SoundEffect.SOUND_LEME_SING = Isaac.GetSoundIdByName("leme_sing")
 SoundEffect.SOUND_MELLO_SING = Isaac.GetSoundIdByName("mello_sing")
 TearVariant.MUSIC_NOTE_TEAR = Isaac.GetEntityVariantByName("Music Note Tear")
 
+--- Debugging text TODO: Delete on release
+--
 function Mod:tests()
 	local player = game:GetPlayer(0)
 	Isaac.RenderScaledText("X:" ..player.Position.X, 50, 60, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText("Y:" .. player.Position.Y, 50, 65, 0.5, 0.5, 255, 255, 255, 255)
 
 	Mod.Room = game:GetLevel():GetCurrentRoom()
-	local a = Mod.Room:GetGridIndex(player.Position)
-	local b = Mod.Room:GetGridPosition(a)
-	Isaac.RenderScaledText("GridIndex:" .. a, 50, 70, 0.5, 0.5, 255, 255, 255, 255)
-	Isaac.RenderScaledText("GridPosition:" .. b.X .. " " .. b.Y, 50, 75, 0.5, 0.5, 255, 255, 255, 255)
+	local gridIndex = Mod.Room:GetGridIndex(player.Position)
+	local gridPosition = Mod.Room:GetGridPosition(gridIndex)
+	Isaac.RenderScaledText("GridIndex:" .. gridIndex, 50, 70, 0.5, 0.5, 255, 255, 255, 255)
+	Isaac.RenderScaledText("GridPosition:" .. gridPosition.X .. " " .. gridPosition.Y, 50, 75, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText("GridSize:" .. Mod.Room:GetGridSize(), 50, 80, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText("GridWidth:" .. Mod.Room:GetGridWidth(), 50, 85, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText("GridHeight:" .. Mod.Room:GetGridHeight(), 50, 90, 0.5, 0.5, 255, 255, 255, 255)
@@ -61,9 +64,10 @@ function Mod:tests()
 	]]
 end
 Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Mod.tests)
+-- End
 
 --
--- Testing things / Spawn items
+-- Spawn test items -- TODO: Delete on release
 --
 function Mod:onUpdate()
 	-- Beginning of run init
@@ -93,32 +97,33 @@ function Mod:PlaySound()
 	--sfx:Play(Id, Volume, Frameoffset, Loop, Pitch)
 end
 
--- Stats
+-- Stats - Leme
 local Leme = {
-	VARIANT = Isaac.GetEntityVariantByName("Lil Leme"), -- familiar variant
+	VARIANT = Isaac.GetEntityVariantByName("Lil Leme"), -- Familiar variant
 	ORBIT_DISTANCE = Vector(50.0, 50.0), -- circular orbit with a radius of 50.0
 	ORBIT_CENTER_OFFSET = Vector(0.0, 0.0), -- move orbit center away from the player
 	ORBIT_LAYER = 708, -- orbitals in the same layer are separated accordingly when spawned
 	ORBIT_SPEED = 0.045, -- usually below 0.1 (too much more and it's too damn fast)
 	PIRO = false,
-    TEAR_DMG = 3.5,
-    TEAR_RATE = 20,
+    TEAR_DMG = 3.5, -- Damage of each tear
+    TEAR_RATE = 20, -- In frames per second
 	--TEAR_FLAGS = TearFlags.TEAR_WIGGLE | TearFlags.TEAR_CHARM,
-	TEAR_FLAGS = TearFlags.TEAR_WIGGLE,
-	TOTALSHOTS = 3
+	TEAR_FLAGS = TearFlags.TEAR_WIGGLE, -- Tear flag
+	TOTALSHOTS = 3 -- Shot limit in piro
 }
 
+-- Stats - Mello
 local Mello = {
-	VARIANT = Isaac.GetEntityVariantByName("Lil Mello"), -- familiar variant
+	VARIANT = Isaac.GetEntityVariantByName("Lil Mello"), -- Familiar variant
 	ORBIT_DISTANCE = Vector(50.0, 50.0), -- circular orbit with a radius of 50.0
 	ORBIT_CENTER_OFFSET = Vector(0.0, 0.0), -- move orbit center away from the player
 	ORBIT_LAYER = 709, -- orbitals in the same layer are separated accordingly when spawned
 	ORBIT_SPEED = -0.0085, -- usually below 0.1 (too much more and it's too damn fast)
 	PIRO = false,
-    TEAR_DMG = 5.5,
-    TEAR_RATE = 25,
-	TEAR_FLAGS = TearFlags.TEAR_WIGGLE,
-	TOTALSHOTS = 5
+    TEAR_DMG = 5.5, -- Damage of each tear
+    TEAR_RATE = 25, -- In frames per second
+	TEAR_FLAGS = TearFlags.TEAR_WIGGLE, -- Tear flag
+	TOTALSHOTS = 5 -- Shot limit in piro
 }
 
 -- ### Leme ###
@@ -148,7 +153,7 @@ Mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, setdmg, EntityType.ENTITY_PLAYE
 local state = 0
 local shoot = false
 local counttearsL = 0
-local dmgroom = nil
+local dmgroom
 local function update_leme(_, leme)
 	leme.OrbitDistance = Leme.ORBIT_DISTANCE -- these need to be constantly updated
 	leme.OrbitSpeed = Leme.ORBIT_SPEED
@@ -184,7 +189,7 @@ local function update_leme(_, leme)
 		-- Shoot tears
 		if leme.FrameCount % Leme.TEAR_RATE == 0 then
 			local FireDir = leme.Player:GetFireDirection()
-			tear = leme:FireProjectile(Dir[FireDir])
+			local tear = leme:FireProjectile(Dir[FireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 			local tearsprite = tear:GetSprite()
 			local randomtear = math.random(3)
@@ -194,7 +199,7 @@ local function update_leme(_, leme)
 			
 			tear:SetSize(1, Vector(1,1),8)
 			tear.CollisionDamage = Leme.TEAR_DMG
-			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS-- Wiggle Worm
+			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS -- Wiggle Worm
 
 			--Mod.PlaySound()
 			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
@@ -268,7 +273,7 @@ local function update_leme(_, leme)
 		-- Shoot tears
 		--
 		local closestEnemyPosition = 999999
-		local closestEnemy = nil
+		local closestEnemy
 		local entities = Isaac.GetRoomEntities()
 
 		for i = 1, #entities do
@@ -288,7 +293,7 @@ local function update_leme(_, leme)
 
 			if leme.FrameCount % 6 == 0 and shoot then
 				if counttearsL < Leme.TOTALSHOTS then
-					tear = leme:FireProjectile(LshootDir)
+					local tear = leme:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
 					local tearsprite = tear:GetSprite()
@@ -369,7 +374,7 @@ local function update_mello(_, leme)
 		-- Shoot tears
 		if leme.FrameCount % Mello.TEAR_RATE == 0 then
 			local FireDir = leme.Player:GetFireDirection()
-			tear = leme:FireProjectile(Dir[FireDir])
+			local tear = leme:FireProjectile(Dir[FireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
 			local tearsprite = tear:GetSprite()
@@ -455,7 +460,7 @@ local function update_mello(_, leme)
 		-- Shoot tears
 		--
 		local closestEnemyPosition = 999999
-		local closestEnemy = nil
+		local closestEnemy
 		local entities = Isaac.GetRoomEntities()
 
 		for i = 1, #entities do
@@ -475,7 +480,7 @@ local function update_mello(_, leme)
 
 			if leme.FrameCount % 6 == 0 and shoot then
 				if counttearsL < Mello.TOTALSHOTS then
-					tear = leme:FireProjectile(LshootDir)
+					local tear = leme:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
 					local tearsprite = tear:GetSprite()
