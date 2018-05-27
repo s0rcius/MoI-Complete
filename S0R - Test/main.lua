@@ -8,6 +8,8 @@ local game = Game()
 local sfx = SFXManager()
 local ZERO_VECTOR = Vector(0, 0) -- TODO: ?
 local MIN_FIRE_DELAY = 5 -- TODO: ?
+-- require("./calculations.lua")
+-- require("calculations.lua")
 
 --
 -- Define Ids to easy-to-use names
@@ -30,6 +32,15 @@ SoundEffect.SOUND_LEME_SING = Isaac.GetSoundIdByName("leme_sing")
 SoundEffect.SOUND_MELLO_SING = Isaac.GetSoundIdByName("mello_sing")
 TearVariant.MUSIC_NOTE_TEAR = Isaac.GetEntityVariantByName("Music Note Tear")
 
+---
+--- EID Comparability
+---
+if not __eidItemDescriptions then
+    __eidItemDescriptions = {}
+end
+__eidItemDescriptions[ItemsId.COLLECTIBLE_LILLEME] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
+__eidItemDescriptions[ItemsId.COLLECTIBLE_LILMELLO] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
+
 --- Debugging text TODO: Delete on release
 --
 function Mod:tests()
@@ -47,6 +58,7 @@ function Mod:tests()
 	Isaac.RenderScaledText("GridHeight:" .. Mod.Room:GetGridHeight(), 50, 90, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText("RoomShapeId:" .. Mod.Room:GetRoomShape(), 50, 95, 0.5, 0.5, 255, 255, 255, 255)
 	Isaac.RenderScaledText(tostring(Mod.Room:GetRoomShape() == RoomShape.ROOMSHAPE_1x1), 50, 100, 0.5, 0.5, 255, 255, 255, 255)
+	--Isaac.RenderScaledText(testcalc(), 50, 200, 0.5, 0.5, 255, 255, 255, 255)
 
 	--[[
 	ROOMSHAPE_1x1 	
@@ -98,7 +110,7 @@ function Mod:PlaySound()
 end
 
 -- Stats - Leme
-local Leme = {
+local lemeStats = {
 	VARIANT = Isaac.GetEntityVariantByName("Lil Leme"), -- Familiar variant
 	ORBIT_DISTANCE = Vector(50.0, 50.0), -- circular orbit with a radius of 50.0
 	ORBIT_CENTER_OFFSET = Vector(0.0, 0.0), -- move orbit center away from the player
@@ -113,7 +125,7 @@ local Leme = {
 }
 
 -- Stats - Mello
-local Mello = {
+local melloStats = {
 	VARIANT = Isaac.GetEntityVariantByName("Lil Mello"), -- Familiar variant
 	ORBIT_DISTANCE = Vector(50.0, 50.0), -- circular orbit with a radius of 50.0
 	ORBIT_CENTER_OFFSET = Vector(0.0, 0.0), -- move orbit center away from the player
@@ -131,16 +143,16 @@ local Mello = {
 local function init_leme(_, leme)
 	-- set initial orbit conditions
 	Mod.PlaySound()
-	leme.OrbitDistance = Leme.ORBIT_DISTANCE
-	leme.OrbitSpeed = Leme.ORBIT_SPEED
-	leme:AddToOrbit(Leme.ORBIT_LAYER)
+	leme.OrbitDistance = lemeStats.ORBIT_DISTANCE
+	leme.OrbitSpeed = lemeStats.ORBIT_SPEED
+	leme:AddToOrbit(lemeStats.ORBIT_LAYER)
 
 	-- Reset sprite
 	local sprite = leme:GetSprite()
 	sprite:Play("Idle", false)
 end
 -- Called once after a Mechanical Fly (body type) familiar is initialized
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_leme, Leme.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_leme, lemeStats.VARIANT)
 
 
 local isdamaged = false
@@ -155,8 +167,8 @@ local shoot = false
 local counttearsL = 0
 local dmgroom
 local function update_leme(_, leme)
-	leme.OrbitDistance = Leme.ORBIT_DISTANCE -- these need to be constantly updated
-	leme.OrbitSpeed = Leme.ORBIT_SPEED
+	leme.OrbitDistance = lemeStats.ORBIT_DISTANCE -- these need to be constantly updated
+	leme.OrbitSpeed = lemeStats.ORBIT_SPEED
 	local leme_sprite = leme:GetSprite()
 
 	-- Flip sprite to direction
@@ -164,32 +176,33 @@ local function update_leme(_, leme)
 	elseif leme.Player.Position.Y - leme.Position.Y < 0 then leme_sprite.FlipX = true -- Left to right
 	end
 
+    -- TODO: Only procs 1 time on the whole floor? reset dmgroom?
 	-- Changes form and behavior when Isaac is damaged
 	--local dmgroom = nil
 	--if leme.Player:GetDamageCooldown() > 0 and leme.Player:GetTotalDamageTaken() > 0 then
 	if dmgroom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgroom then
 		leme_sprite:Play("Idle", false)
 		leme.CollisionDamage = 2.5
-		Leme.PIRO = false
+		lemeStats.PIRO = false
 		isdamaged = false
 	elseif isdamaged == true then
 		leme_sprite:Play("IdleP", false)
 		leme.CollisionDamage = 4.5
 		dmgroom = game:GetLevel():GetCurrentRoomIndex()
-		Leme.PIRO = true
+		lemeStats.PIRO = true
 	end
 	
 	
-	local center_pos = (leme.Player.Position + leme.Player.Velocity) + Leme.ORBIT_CENTER_OFFSET
+	local center_pos = (leme.Player.Position + leme.Player.Velocity) + lemeStats.ORBIT_CENTER_OFFSET
 	local orbit_pos = leme:GetOrbitPosition(center_pos)
-	if Leme.PIRO == false then
+	if lemeStats.PIRO == false then
 		-- Orbit around the player
 		leme.Velocity = orbit_pos - leme.Position
 
 		-- Shoot tears
-		if leme.FrameCount % Leme.TEAR_RATE == 0 then
+		if leme.FrameCount % lemeStats.TEAR_RATE == 0 then
 			local FireDir = leme.Player:GetFireDirection()
-			local tear = leme:FireProjectile(Dir[FireDir])
+			tear = leme:FireProjectile(Dir[FireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 			local tearsprite = tear:GetSprite()
 			local randomtear = math.random(3)
@@ -198,8 +211,8 @@ local function update_leme(_, leme)
 			else tearsprite:Play("RegularTear3", false) end
 			
 			tear:SetSize(1, Vector(1,1),8)
-			tear.CollisionDamage = Leme.TEAR_DMG
-			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS -- Wiggle Worm
+			tear.CollisionDamage = lemeStats.TEAR_DMG
+			tear.TearFlags = 1<<0 | lemeStats.TEAR_FLAGS -- Wiggle Worm
 
 			--Mod.PlaySound()
 			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
@@ -292,7 +305,7 @@ local function update_leme(_, leme)
 			local LshootDir = (closestEnemy.Position - leme.Position):Normalized()
 
 			if leme.FrameCount % 6 == 0 and shoot then
-				if counttearsL < Leme.TOTALSHOTS then
+				if counttearsL < lemeStats.TOTALSHOTS then
 					local tear = leme:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
@@ -304,8 +317,8 @@ local function update_leme(_, leme)
 					else tearsprite:Play("RegularTear3", false) end
 					
 					tear:SetSize(1, Vector(1,1),8)
-					tear.CollisionDamage = Leme.TEAR_DMG + 1.5 -- Boosted from base dmg
-					tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS -- Wiggle Worm
+					tear.CollisionDamage = lemeStats.TEAR_DMG + 1.5 -- Boosted from base dmg
+					tear.TearFlags = 1<<0 | lemeStats.TEAR_FLAGS -- Wiggle Worm
 
 					counttearsL = counttearsL + 1
 
@@ -319,7 +332,7 @@ local function update_leme(_, leme)
 	end
 end
 -- Called every frame for each Mechanical Fly (body type)
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_leme, Leme.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_leme, lemeStats.VARIANT)
 
 
 -- ### Mello ###
@@ -328,53 +341,53 @@ local timer = 0
 local function init_mello(_, mello)
 	-- set initial orbit conditions
 	Mod.PlaySound()
-	mello.OrbitDistance = Mello.ORBIT_DISTANCE
-	mello.OrbitSpeed = Mello.ORBIT_SPEED
-	mello:AddToOrbit(Mello.ORBIT_LAYER)
+	mello.OrbitDistance = melloStats.ORBIT_DISTANCE
+	mello.OrbitSpeed = melloStats.ORBIT_SPEED
+	mello:AddToOrbit(melloStats.ORBIT_LAYER)
 
 	-- Reset sprite
 	local sprite = mello:GetSprite()
 	sprite:Play("Idle", false)
 end
 -- Called once after a Mechanical Fly (body type) familiar is initialized
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_mello, Mello.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_mello, melloStats.VARIANT)
 
-local function update_mello(_, leme)
-	leme.OrbitDistance = Mello.ORBIT_DISTANCE -- these need to be constantly updated
-	leme.OrbitSpeed = Mello.ORBIT_SPEED
-	local leme_sprite = leme:GetSprite()
+local function update_mello(_, mello)
+	mello.OrbitDistance = melloStats.ORBIT_DISTANCE -- these need to be constantly updated
+	mello.OrbitSpeed = melloStats.ORBIT_SPEED
+	local sprite = mello:GetSprite()
 
 	-- Flip sprite to direction
-	if leme.Player.Position.Y - leme.Position.Y > 0 then leme_sprite.FlipX = true -- Right to left
-	elseif leme.Player.Position.Y - leme.Position.Y < 0 then leme_sprite.FlipX = false -- Left to right
+	if mello.Player.Position.Y - mello.Position.Y > 0 then sprite.FlipX = true -- Right to left
+	elseif mello.Player.Position.Y - mello.Position.Y < 0 then sprite.FlipX = false -- Left to right
 	end
 
 	-- Changes form and behavior when Isaac is damaged
 	--local dmgroom = nil
 	--if leme.Player:GetDamageCooldown() > 0 and leme.Player:GetTotalDamageTaken() > 0 then
 	if dmgroom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgroom then
-		leme_sprite:Play("Idle", false)
-		leme.CollisionDamage = 2.5
-		Mello.PIRO = false
+		sprite:Play("Idle", false)
+		mello.CollisionDamage = 2.5
+		melloStats.PIRO = false
 		isdamaged = false
 	elseif isdamaged == true then
-		leme_sprite:Play("IdleP", false)
-		leme.CollisionDamage = 4.5
+		sprite:Play("IdleP", false)
+		mello.CollisionDamage = 4.5
 		dmgroom = game:GetLevel():GetCurrentRoomIndex()
-		Mello.PIRO = true
+		melloStats.PIRO = true
 	end
 	
 	
-	local center_pos = (leme.Player.Position + leme.Player.Velocity) + Mello.ORBIT_CENTER_OFFSET
-	local orbit_pos = leme:GetOrbitPosition(center_pos)
-	if Mello.PIRO == false then
+	local center_pos = (mello.Player.Position + mello.Player.Velocity) + melloStats.ORBIT_CENTER_OFFSET
+	local orbit_pos = mello:GetOrbitPosition(center_pos)
+	if melloStats.PIRO == false then
 		-- Orbit around the player
-		leme.Velocity = orbit_pos - leme.Position
+		mello.Velocity = orbit_pos - mello.Position
 
 		-- Shoot tears
-		if leme.FrameCount % Mello.TEAR_RATE == 0 then
-			local FireDir = leme.Player:GetFireDirection()
-			local tear = leme:FireProjectile(Dir[FireDir])
+		if mello.FrameCount % melloStats.TEAR_RATE == 0 then
+			local FireDir = mello.Player:GetFireDirection()
+			tear = mello:FireProjectile(Dir[FireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
 			local tearsprite = tear:GetSprite()
@@ -385,33 +398,33 @@ local function update_mello(_, leme)
 			else tearsprite:Play("RegularTear3", false) end
 			
 			tear:SetSize(1, Vector(1,1),8)
-			tear.CollisionDamage = Leme.TEAR_DMG
-			tear.TearFlags = 1<<0 | Leme.TEAR_FLAGS -- Wiggle Worm
+			tear.CollisionDamage = melloStats.TEAR_DMG
+			tear.TearFlags = 1<<0 | melloStats.TEAR_FLAGS -- Wiggle Worm
 
 			--Mod.PlaySound()
-			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
+			sfx:Play(SoundEffect.SOUND_MELLO_SING, 1, 0, false, randomtear)
 		end
 	else
 		-- TODO
 		--leme.Velocity = orbit_pos - Vector(0,0)
-		leme.Velocity = Vector(0,0)
+		mello.Velocity = Vector(0,0)
 
-		if leme.FrameCount % 30 == 0 then
+		if mello.FrameCount % 30 == 0 then
 			local roomshape = game:GetLevel():GetCurrentRoom():GetRoomShape()
 			-- Desired positions (Normal Room)
 			if roomshape == RoomShape.ROOMSHAPE_1x1 then
 				if state == 1 then 
-					leme.Position = Vector(160,200)
+					mello.Position = Vector(160,200)
 				elseif state == 2 then
-					leme.Position = Vector(160,360)
+					mello.Position = Vector(160,360)
 				elseif state == 3 then
-					leme.Position = Vector(320,360)
+					mello.Position = Vector(320,360)
 				elseif state == 4 then
-					leme.Position = Vector(480,360)
+					mello.Position = Vector(480,360)
 				elseif state == 5 then
-					leme.Position = Vector(480,200)
+					mello.Position = Vector(480,200)
 				elseif state == 6 then
-					leme.Position = Vector(320,200)
+					mello.Position = Vector(320,200)
 					state = 0
 				elseif state > 7 then
 					state = 0
@@ -419,31 +432,31 @@ local function update_mello(_, leme)
 				state = state + 1
 			elseif roomshape == RoomShape.ROOMSHAPE_LTL then
 				if state == 1 then 
-					leme.Position = Vector(160,480)
+					mello.Position = Vector(160,480)
 				elseif state == 2 then
-					leme.Position = Vector(160,640)
+					mello.Position = Vector(160,640)
 				elseif state == 3 then
-					leme.Position = Vector(440,640)
+					mello.Position = Vector(440,640)
 				elseif state == 4 then
-					leme.Position = Vector(720,640)
+					mello.Position = Vector(720,640)
 				elseif state == 5 then
-					leme.Position = Vector(1000,640)
+					mello.Position = Vector(1000,640)
 				elseif state == 6 then
-					leme.Position = Vector(1000,520)
+					mello.Position = Vector(1000,520)
 				elseif state == 7 then
-					leme.Position = Vector(1000,360)
+					mello.Position = Vector(1000,360)
 				elseif state == 8 then
-					leme.Position = Vector(1000,200)
+					mello.Position = Vector(1000,200)
 				elseif state == 9 then
-					leme.Position = Vector(840,200)
+					mello.Position = Vector(840,200)
 				elseif state == 10 then
-					leme.Position = Vector(680,200)
+					mello.Position = Vector(680,200)
 				elseif state == 11 then
-					leme.Position = Vector(680,340)
+					mello.Position = Vector(680,340)
 				elseif state == 12 then
-					leme.Position = Vector(680,480)
+					mello.Position = Vector(680,480)
 				elseif state == 13 then
-					leme.Position = Vector(420,480)
+					mello.Position = Vector(420,480)
 					state = 0
 				elseif state > 14 then
 					state = 0
@@ -451,7 +464,7 @@ local function update_mello(_, leme)
 				state = state + 1
 			else
 				--leme.Position = Vector(160,200)
-				leme.Position = leme.Player.Position + Vector(50,50)
+				mello.Position = mello.Player.Position + Vector(50,50)
 			end
 			shoot = true
 		end
@@ -465,7 +478,7 @@ local function update_mello(_, leme)
 
 		for i = 1, #entities do
 			local e = entities[i]
-			local distance = (e.Position - leme.Position):Length()
+			local distance = (e.Position - mello.Position):Length()
 			if e:IsActiveEnemy() and e:IsVulnerableEnemy() then
 				if closestEnemyPosition > distance then
 					closestEnemyPosition = distance
@@ -476,11 +489,11 @@ local function update_mello(_, leme)
 
 		-- If theres a enemy
 		if closestEnemy ~= nil then
-			local LshootDir = (closestEnemy.Position - leme.Position):Normalized()
+			local LshootDir = (closestEnemy.Position - mello.Position):Normalized()
 
-			if leme.FrameCount % 6 == 0 and shoot then
-				if counttearsL < Mello.TOTALSHOTS then
-					local tear = leme:FireProjectile(LshootDir)
+			if mello.FrameCount % 6 == 0 and shoot then
+				if counttearsL < melloStats.TOTALSHOTS then
+					local tear = mello:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
 					local tearsprite = tear:GetSprite()
@@ -491,12 +504,12 @@ local function update_mello(_, leme)
 					else tearsprite:Play("RegularTear3", false) end
 					
 					tear:SetSize(1, Vector(1,1),8)
-					tear.CollisionDamage = Mello.TEAR_DMG + 1.5 -- Boosted from base dmg
-					tear.TearFlags = 1<<0 | Mello.TEAR_FLAGS -- Wiggle Worm
+					tear.CollisionDamage = melloStats.TEAR_DMG + 1.5 -- Boosted from base dmg
+					tear.TearFlags = 1<<0 | melloStats.TEAR_FLAGS -- Wiggle Worm
 
 					counttearsL = counttearsL + 1
 
-					sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
+					sfx:Play(SoundEffect.SOUND_MELLO_SING, 1, 0, false, randomtear)
 				else
 					counttearsL = 0
 					shoot = false
@@ -576,7 +589,7 @@ local function update_mello(_, mello)
 end
 ]]
 -- Called every frame for each Mechanical Fly (body type)
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_mello, Mello.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_mello, melloStats.VARIANT)
 
 
 --
@@ -591,12 +604,12 @@ local function update_cache(_, player, cache_flag)
 		-- Leme
 		local leme_pickups = player:GetCollectibleNum(ItemsId.COLLECTIBLE_LILLEME) -- number of 'Planetoids' items
 		local leme_rng = player:GetCollectibleRNG(ItemsId.COLLECTIBLE_LILLEME) -- respective RNG reference
-		player:CheckFamiliar(Leme.VARIANT, leme_pickups, leme_rng)
+		player:CheckFamiliar(lemeStats.VARIANT, leme_pickups, leme_rng)
 
 		-- Mello
 		local mello_pickups = player:GetCollectibleNum(ItemsId.COLLECTIBLE_LILMELLO)
 		local mello_rng = player:GetCollectibleRNG(ItemsId.COLLECTIBLE_LILMELLO)
-		player:CheckFamiliar(Mello.VARIANT, mello_pickups, mello_rng)
+		player:CheckFamiliar(melloStats.VARIANT, mello_pickups, mello_rng)
 	end
 end
 Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, update_cache)
