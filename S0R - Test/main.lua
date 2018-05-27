@@ -121,7 +121,8 @@ local lemeStats = {
     TEAR_RATE = 20, -- In frames per second
 	--TEAR_FLAGS = TearFlags.TEAR_WIGGLE | TearFlags.TEAR_CHARM,
 	TEAR_FLAGS = TearFlags.TEAR_WIGGLE, -- Tear flag
-	TOTALSHOTS = 3 -- Shot limit in piro
+	TOTALSHOTS = 3, -- Shot limit in piro
+	COUNT_TEARS = 0
 }
 
 -- Stats - Mello
@@ -135,12 +136,13 @@ local melloStats = {
     TEAR_DMG = 5.5, -- Damage of each tear
     TEAR_RATE = 25, -- In frames per second
 	TEAR_FLAGS = TearFlags.TEAR_WIGGLE, -- Tear flag
-	TOTALSHOTS = 5 -- Shot limit in piro
+	TOTALSHOTS = 5, -- Shot limit in piro
+	COUNT_TEARS = 0
 }
 
 -- ### Leme ###
 
-local function init_leme(_, leme)
+local function initLeme(_, leme)
 	-- set initial orbit conditions
 	Mod.PlaySound()
 	leme.OrbitDistance = lemeStats.ORBIT_DISTANCE
@@ -152,43 +154,42 @@ local function init_leme(_, leme)
 	sprite:Play("Idle", false)
 end
 -- Called once after a Mechanical Fly (body type) familiar is initialized
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_leme, lemeStats.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, initLeme, lemeStats.VARIANT)
 
 
-local isdamaged = false
+local isDamaged = false
 local function setdmg(Entity, Damage, Flags, Source, DamageCountdown)
 	-- Has item check?
-	isdamaged = true
+	isDamaged = true
 end
 Mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, setdmg, EntityType.ENTITY_PLAYER)
 
 local state = 0
 local shoot = false
-local counttearsL = 0
-local dmgroom
-local function update_leme(_, leme)
+local dmgRoom
+local function updateLeme(_, leme)
 	leme.OrbitDistance = lemeStats.ORBIT_DISTANCE -- these need to be constantly updated
 	leme.OrbitSpeed = lemeStats.ORBIT_SPEED
-	local leme_sprite = leme:GetSprite()
+	local sprite = leme:GetSprite()
 
 	-- Flip sprite to direction
-	if leme.Player.Position.Y - leme.Position.Y > 0 then leme_sprite.FlipX = false -- Right to left
-	elseif leme.Player.Position.Y - leme.Position.Y < 0 then leme_sprite.FlipX = true -- Left to right
+	if leme.Player.Position.Y - leme.Position.Y > 0 then sprite.FlipX = false -- Right to left
+	elseif leme.Player.Position.Y - leme.Position.Y < 0 then sprite.FlipX = true -- Left to right
 	end
 
     -- TODO: Only procs 1 time on the whole floor? reset dmgroom?
 	-- Changes form and behavior when Isaac is damaged
 	--local dmgroom = nil
 	--if leme.Player:GetDamageCooldown() > 0 and leme.Player:GetTotalDamageTaken() > 0 then
-	if dmgroom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgroom then
-		leme_sprite:Play("Idle", false)
+	if dmgRoom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgRoom then
+		sprite:Play("Idle", false)
 		leme.CollisionDamage = 2.5
 		lemeStats.PIRO = false
-		isdamaged = false
-	elseif isdamaged == true then
-		leme_sprite:Play("IdleP", false)
+		isDamaged = false
+	elseif isDamaged == true then
+		sprite:Play("IdleP", false)
 		leme.CollisionDamage = 4.5
-		dmgroom = game:GetLevel():GetCurrentRoomIndex()
+		dmgRoom = game:GetLevel():GetCurrentRoomIndex()
 		lemeStats.PIRO = true
 	end
 	
@@ -201,21 +202,21 @@ local function update_leme(_, leme)
 
 		-- Shoot tears
 		if leme.FrameCount % lemeStats.TEAR_RATE == 0 then
-			local FireDir = leme.Player:GetFireDirection()
-			tear = leme:FireProjectile(Dir[FireDir])
+			local fireDir = leme.Player:GetFireDirection()
+			tear = leme:FireProjectile(Dir[fireDir])
 			tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
-			local tearsprite = tear:GetSprite()
-			local randomtear = math.random(3)
-			if randomtear == 1 then	tearsprite:Play("RegularTear1", false)
-			elseif randomtear == 2 then	tearsprite:Play("RegularTear2", false)
-			else tearsprite:Play("RegularTear3", false) end
+			local tearSprite = tear:GetSprite()
+			local randomTear = math.random(3)
+			if randomTear == 1 then	tearSprite:Play("RegularTear1", false)
+			elseif randomTear == 2 then	tearSprite:Play("RegularTear2", false)
+			else tearSprite:Play("RegularTear3", false) end
 			
 			tear:SetSize(1, Vector(1,1),8)
 			tear.CollisionDamage = lemeStats.TEAR_DMG
 			tear.TearFlags = 1<<0 | lemeStats.TEAR_FLAGS -- Wiggle Worm
 
 			--Mod.PlaySound()
-			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
+			sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomTear)
 		end
 	else
 		-- TODO
@@ -305,7 +306,7 @@ local function update_leme(_, leme)
 			local LshootDir = (closestEnemy.Position - leme.Position):Normalized()
 
 			if leme.FrameCount % 6 == 0 and shoot then
-				if counttearsL < lemeStats.TOTALSHOTS then
+				if lemeStats.COUNT_TEARS < lemeStats.TOTALSHOTS then
 					local tear = leme:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
@@ -320,11 +321,11 @@ local function update_leme(_, leme)
 					tear.CollisionDamage = lemeStats.TEAR_DMG + 1.5 -- Boosted from base dmg
 					tear.TearFlags = 1<<0 | lemeStats.TEAR_FLAGS -- Wiggle Worm
 
-					counttearsL = counttearsL + 1
+					lemeStats.COUNT_TEARS = lemeStats.COUNT_TEARS + 1
 
 					sfx:Play(SoundEffect.SOUND_LEME_SING, 1, 0, false, randomtear)
 				else
-					counttearsL = 0
+					lemeStats.COUNT_TEARS = 0
 					shoot = false
 				end
 			end
@@ -332,13 +333,13 @@ local function update_leme(_, leme)
 	end
 end
 -- Called every frame for each Mechanical Fly (body type)
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_leme, lemeStats.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, updateLeme, lemeStats.VARIANT)
 
 
 -- ### Mello ###
 
 local timer = 0
-local function init_mello(_, mello)
+local function initMello(_, mello)
 	-- set initial orbit conditions
 	Mod.PlaySound()
 	mello.OrbitDistance = melloStats.ORBIT_DISTANCE
@@ -350,9 +351,9 @@ local function init_mello(_, mello)
 	sprite:Play("Idle", false)
 end
 -- Called once after a Mechanical Fly (body type) familiar is initialized
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, init_mello, melloStats.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, initMello, melloStats.VARIANT)
 
-local function update_mello(_, mello)
+local function updateMello(_, mello)
 	mello.OrbitDistance = melloStats.ORBIT_DISTANCE -- these need to be constantly updated
 	mello.OrbitSpeed = melloStats.ORBIT_SPEED
 	local sprite = mello:GetSprite()
@@ -365,15 +366,15 @@ local function update_mello(_, mello)
 	-- Changes form and behavior when Isaac is damaged
 	--local dmgroom = nil
 	--if leme.Player:GetDamageCooldown() > 0 and leme.Player:GetTotalDamageTaken() > 0 then
-	if dmgroom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgroom then
+	if dmgRoom ~= nil and game:GetLevel():GetCurrentRoomIndex() ~= dmgRoom then
 		sprite:Play("Idle", false)
 		mello.CollisionDamage = 2.5
 		melloStats.PIRO = false
-		isdamaged = false
-	elseif isdamaged == true then
+		isDamaged = false
+	elseif isDamaged == true then
 		sprite:Play("IdleP", false)
 		mello.CollisionDamage = 4.5
-		dmgroom = game:GetLevel():GetCurrentRoomIndex()
+		dmgRoom = game:GetLevel():GetCurrentRoomIndex()
 		melloStats.PIRO = true
 	end
 	
@@ -492,7 +493,7 @@ local function update_mello(_, mello)
 			local LshootDir = (closestEnemy.Position - mello.Position):Normalized()
 
 			if mello.FrameCount % 6 == 0 and shoot then
-				if counttearsL < melloStats.TOTALSHOTS then
+				if melloStats.COUNT_TEARS < melloStats.TOTALSHOTS then
 					local tear = mello:FireProjectile(LshootDir)
 					tear:ChangeVariant(TearVariant.MUSIC_NOTE_TEAR)
 
@@ -507,11 +508,11 @@ local function update_mello(_, mello)
 					tear.CollisionDamage = melloStats.TEAR_DMG + 1.5 -- Boosted from base dmg
 					tear.TearFlags = 1<<0 | melloStats.TEAR_FLAGS -- Wiggle Worm
 
-					counttearsL = counttearsL + 1
+					melloStats.COUNT_TEARS = melloStats.COUNT_TEARS + 1
 
 					sfx:Play(SoundEffect.SOUND_MELLO_SING, 1, 0, false, randomtear)
 				else
-					counttearsL = 0
+					melloStats.COUNT_TEARS = 0
 					shoot = false
 				end
 			end
@@ -589,13 +590,13 @@ local function update_mello(_, mello)
 end
 ]]
 -- Called every frame for each Mechanical Fly (body type)
-Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, update_mello, melloStats.VARIANT)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, updateMello, melloStats.VARIANT)
 
 
 --
 -- Handles cache updates
 --
-local function update_cache(_, player, cache_flag)
+local function updateCache(_, player, cache_flag)
 	-- Handle the addition/removal and reallignments of Isaac's familiars/orbitals
 	if cache_flag == CacheFlag.CACHE_FAMILIARS then
 		-- 1 'Planetoids' item = 1 Sun + 1 Earth + 1 Moon`
@@ -612,7 +613,7 @@ local function update_cache(_, player, cache_flag)
 		player:CheckFamiliar(melloStats.VARIANT, mello_pickups, mello_rng)
 	end
 end
-Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, update_cache)
+Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, updateCache)
 
 --[[
 --

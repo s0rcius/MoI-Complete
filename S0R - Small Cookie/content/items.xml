@@ -1,0 +1,4 @@
+<items gfxroot="gfx/items/" version="1">
+	<!--Trinkets-->
+	<trinket name="Small Cookie" description="A tiny snack" gfx="trinket_baby-bender.png" />
+</items>

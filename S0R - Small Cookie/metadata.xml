@@ -1,0 +1,12 @@
+<metadata>
+    <name>Small Cookie trinket</name>
+    <directory>small_cookie</directory>
+    <description>
+        Adds a trinket to the game. The Small Cookie when held heals Isaac over time (Like the Placenta item), but disappears after 10 uses.
+
+        If you have Mom's Box the trinket will heal you a full heart instead of a half heart
+    </description>
+    <version>1.0</version>
+    <visibility/>
+    <tag id="Trinkets"/>
+</metadata>
