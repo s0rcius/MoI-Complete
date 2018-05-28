@@ -12,12 +12,13 @@ local MIN_FIRE_DELAY = 5 -- TODO: ?
 -- require("calculations.lua")
 
 --
--- Define Ids to easy-to-use names
+-- Define Ids //to easy-to-use names
 --
-local ItemsId = {
-    COLLECTIBLE_LILLEME = Isaac.GetItemIdByName("Lil Leme!"), -- item ID
-    COLLECTIBLE_LILMELLO = Isaac.GetItemIdByName("Lil Mello") -- item ID
-}
+CollectibleType.COLLECTIBLE_LILLEME = Isaac.GetItemIdByName("Lil Leme!")
+CollectibleType.COLLECTIBLE_LILMELLO = Isaac.GetItemIdByName("Lil Mello")
+SoundEffect.SOUND_LEME_SING = Isaac.GetSoundIdByName("leme_sing")
+SoundEffect.SOUND_MELLO_SING = Isaac.GetSoundIdByName("mello_sing")
+TearVariant.MUSIC_NOTE_TEAR = Isaac.GetEntityVariantByName("Music Note Tear")
 
 -- Direction vars
 local Dir = {
@@ -27,19 +28,14 @@ local Dir = {
 	[Direction.RIGHT] = Vector(1,0)
 }
 
---
-SoundEffect.SOUND_LEME_SING = Isaac.GetSoundIdByName("leme_sing")
-SoundEffect.SOUND_MELLO_SING = Isaac.GetSoundIdByName("mello_sing")
-TearVariant.MUSIC_NOTE_TEAR = Isaac.GetEntityVariantByName("Music Note Tear")
-
 ---
 --- EID Comparability
 ---
 if not __eidItemDescriptions then
     __eidItemDescriptions = {}
 end
-__eidItemDescriptions[ItemsId.COLLECTIBLE_LILLEME] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
-__eidItemDescriptions[ItemsId.COLLECTIBLE_LILMELLO] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
+__eidItemDescriptions[CollectibleType.COLLECTIBLE_LILLEME] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
+__eidItemDescriptions[CollectibleType.COLLECTIBLE_LILMELLO] = "Shooting orbital#When Isaac is hurt it moves around the room shooting tears towards enemies"
 
 --- Debugging text TODO: Delete on release
 --
@@ -85,10 +81,10 @@ function Mod:onUpdate()
 	-- Beginning of run init
 	if Game():GetFrameCount() == 1 then
 		-- Working Item spawns (For testing only)
-		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, ItemsId.COLLECTIBLE_LILLEME, Vector(470,350), Vector(0,0), nil)
-		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, ItemsId.COLLECTIBLE_LILMELLO, Vector(520,350), Vector(0,0), nil)
-		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, ItemsId.COLLECTIBLE_LILLEME, Vector(270,350), Vector(0,0), nil)
-		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, ItemsId.COLLECTIBLE_LILMELLO, Vector(320,350), Vector(0,0), nil)
+		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, CollectibleType.COLLECTIBLE_LILLEME, Vector(470,350), Vector(0,0), nil)
+		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, CollectibleType.COLLECTIBLE_LILMELLO, Vector(520,350), Vector(0,0), nil)
+		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, CollectibleType.COLLECTIBLE_LILLEME, Vector(270,350), Vector(0,0), nil)
+		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, CollectibleType.COLLECTIBLE_LILMELLO, Vector(320,350), Vector(0,0), nil)
 
 		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, Isaac.GetItemIdByName("Planetoids"), Vector(270,300), Vector(0,0), nil)
 		Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, Isaac.GetItemIdByName("Planetoids"), Vector(320,300), Vector(0,0), nil)
@@ -603,13 +599,13 @@ local function updateCache(_, player, cache_flag)
 
 
 		-- Leme
-		local leme_pickups = player:GetCollectibleNum(ItemsId.COLLECTIBLE_LILLEME) -- number of 'Planetoids' items
-		local leme_rng = player:GetCollectibleRNG(ItemsId.COLLECTIBLE_LILLEME) -- respective RNG reference
+		local leme_pickups = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_LILLEME) -- number of 'Planetoids' items
+		local leme_rng = player:GetCollectibleRNG(CollectibleType.COLLECTIBLE_LILLEME) -- respective RNG reference
 		player:CheckFamiliar(lemeStats.VARIANT, leme_pickups, leme_rng)
 
 		-- Mello
-		local mello_pickups = player:GetCollectibleNum(ItemsId.COLLECTIBLE_LILMELLO)
-		local mello_rng = player:GetCollectibleRNG(ItemsId.COLLECTIBLE_LILMELLO)
+		local mello_pickups = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_LILMELLO)
+		local mello_rng = player:GetCollectibleRNG(CollectibleType.COLLECTIBLE_LILMELLO)
 		player:CheckFamiliar(melloStats.VARIANT, mello_pickups, mello_rng)
 	end
 end
