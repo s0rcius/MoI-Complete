@@ -1,6 +1,6 @@
---VvP and S0R's Small Cookie Trinket--
---Version 1.0
---By Vincent1vp / SoRcius
+--- VvP and S0R's Small Cookie Trinket ---
+--- Version 1.0
+--- By Vincent1vp / SoRcius
 
 local Mod = RegisterMod("S0R_SmallCookie", 1)
 local game = Game()
